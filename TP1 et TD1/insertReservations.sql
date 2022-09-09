@@ -1,0 +1,1 @@
+insert SALLE(idS,nomS,capacite)
