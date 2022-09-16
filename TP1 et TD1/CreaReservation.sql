@@ -6,7 +6,7 @@ DROP TABLE SALLE;
 
 CREATE TABLE LETYPE(
     idT int(3),
-    letype varchar(20),
+    letype varchar(20) UNIQUE,
     PRIMARY KEY(idT)
 );
 
@@ -14,7 +14,7 @@ CREATE TABLE OCCUPANT(idO int(3), nomO varchar(20), caracteristique varchar(20),
 
 CREATE TABLE SALLE(
     idS int(3),
-    nomS varchar(20),
+    nomS varchar(20) UNIQUE,
     capacite int(3),
     PRIMARY KEY(idS)
 );
@@ -23,9 +23,11 @@ CREATE TABLE RESERVATION(
     idS int(3),
     idO int(3),
     ladate DATE,
-    heure int(3) check (heure between 0 and 23),
-    duree int(3),
-    PRIMARY KEY(idS,idO,ladate,heure)
+    heure int(2) check (heure between 0 and 23),
+    duree int(2),
+    nbpers int(3) not null,
+    PRIMARY KEY(idS,idO,ladate,heure),
+    check (heure + duree <= 24)
 );
 
 CREATE TABLE RESERVABLE(
