@@ -53,7 +53,106 @@ select deptEntrepot(5);
 
 --exo 2 q3
 DELIMITER |
-create or replace function 
+create or replace function valEntrepot(codeEnt int) returns int
+begin 
+    declare res int DEFAULT 0;
+    select sum(quantite * prix) into res
+    from ENTREPOT NATURAL JOIN STOCKER NATURAL JOIN ARTICLE
+    where code = codeEnt;
+return res;
+END |
+DELIMITER ;
+select valEntrepot(1);
 --exo 2 q4
+DELIMITER |
+create or replace procedure toutEntrepots()
+begin
+declare res varchar(500) default '';
+declare cod int;
+declare nomEnt varchar(42);
+declare dpt varchar(42);
+declare fini boolean default false;
+declare lesEntrepots cursor for
+    select code, nom, departement
+    from ENTREPOT;
 
-create or replace procedure 
+declare continue handler for not found set fini = true;
+
+open lesEntrepots;
+    while not fini do
+        fetch lesEntrepots into cod, nomEnt, dpt;
+
+        if not fini then
+            set res = concat(res,"l'entrepot ",cod,' nommé ',nomEnt,' du département ',dpt,'\n');
+        end if;
+    end while;
+close lesEntrepots;
+select res;
+end |
+delimiter ;
+call toutEntrepots();
+
+--exo 2 q5
+DELIMITER |
+create or replace procedure entrepotsParDep()
+begin 
+declare res varchar(500) default '';
+declare dpt varchar(42);
+declare cod int;
+declare nomEnt varchar(42);
+declare nbDep int default 0;
+declare fini boolean default false;
+declare fin boolean default false;
+declare curseur cursor for
+    select COUNT(distinct code)feur, code,nom,departement
+    from ENTREPOT
+    group by departement
+    order by departement;
+
+declare continue handler for not found set fini = true;
+
+open curseur;
+    while not fini do
+    fetch curseur into nbDep, cod,nomEnt,dpt;
+
+    if not fini then
+        set res = concat(res,"le dpt ",dpt," possède ",nbDep," entrepots",'\n','     ','entrepot ',cod,' ',nomEnt,'\n');
+        end if;
+    end while;
+close curseur;
+select res;
+end |
+delimiter ;
+call entrepotsParDep();
+
+--exo 2 q6
+
+DELIMITER |
+create or replace procedure entrepotsParDep()
+begin 
+declare res varchar(500) default '';
+declare dpt varchar(42);
+declare valdept int default 0;
+declare nbDep int default 0;
+declare fini boolean default false;
+declare curseur cursor for
+    select sum(quantite * prix)val,COUNT(distinct code)feur, departement
+    from ENTREPOT NATURAL LEFT JOIN STOCKER NATURAL JOIN ARTICLE
+    group by departement
+    order by departement;
+
+declare continue handler for not found set fini = true;
+
+open curseur;
+    while not fini do
+    fetch curseur into valdept,nbDep, dpt;
+
+    if not fini then
+        set res = concat(res,"le dpt ",dpt," possède ",nbDep," entrepots"," et à un patrimoine de ",valdept ,'\n');
+        end if;
+    end while;
+close curseur;
+select res;
+end |
+delimiter ;
+call entrepotsParDep();
