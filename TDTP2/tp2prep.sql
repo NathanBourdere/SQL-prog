@@ -100,26 +100,37 @@ declare res varchar(500) default '';
 declare dpt varchar(42);
 declare cod int;
 declare nomEnt varchar(42);
+declare deptPrec varchar(42) default '';
 declare nbDep int default 0;
 declare fini boolean default false;
 declare fin boolean default false;
 declare curseur cursor for
-    select COUNT(distinct code)feur, code,nom,departement
+    select code,nom,departement
     from ENTREPOT
-    group by departement
     order by departement;
 
 declare continue handler for not found set fini = true;
 
 open curseur;
+set deptPrec = '';
+set nbDep = 0;
     while not fini do
-    fetch curseur into nbDep, cod,nomEnt,dpt;
+    fetch curseur into cod,nomEnt,dpt;
 
     if not fini then
-        set res = concat(res,"le dpt ",dpt," possède ",nbDep," entrepots",'\n','     ','entrepot ',cod,' ',nomEnt,'\n');
+        if(deptPrec !='' and deptPrec!=dpt) then
+            set res = concat(res," il y a ",nbDep," entrepots dans le departement ",deptPrec,'\n','     ','\n ');
+            set nbDep = 0;
+        end if;
+        set deptPrec = dpt;
+        set nbDep = nbDep+1;
+        set res = concat(res,'entrepot code ',cod,' nom ',nomEnt,'\n ');
         end if;
     end while;
 close curseur;
+    if nbDep!=0 then
+    set res = concat(res," il y a ",nbDep," entrepots dans le departement ",deptPrec,'\n','     ','\n ');
+    end if;
 select res;
 end |
 delimiter ;
@@ -156,3 +167,84 @@ select res;
 end |
 delimiter ;
 call entrepotsParDep();
+
+--exo 2 q7
+
+DELIMITER |
+create or replace function majArticle(ref INT(4),newLibelle varchar(42),newPrix decimal(5,2)) returns varchar(500)
+begin
+    declare res varchar(500) DEFAULT "libelle qui n'existe pas";
+    declare refres varchar(42) DEFAULT '';
+    declare intRes int(50) DEFAULT -1;
+    declare prixRes decimal(5,2) DEFAULT 0.0;
+    declare maximum int(5) DEFAULT 0;
+        select reference,libelle into intres,refres
+        from ARTICLE
+        where reference = ref;
+    if intres = ref THEN
+    if refres = newLibelle THEN
+    update ARTICLE
+    set prix = newPrix
+    where reference = ref;
+    set res = concat(res,"la table Article a été modifiée, l'article ",ref," qui propose : ",newLibelle," a vu son prix être modifié, nouveau prix : ",newPrix);
+    end if;
+    ELSE
+    set maximum = maxRefArticle()+1;
+    insert into ARTICLE VALUES(maximum,newLibelle,newPrix);
+    set res = concat(res,"la table Article a un nouvel article, l'article ",maximum," qui propose : ",newLibelle," à été crée, nouveau prix : ",newPrix);
+    end if;
+return res;
+END |
+DELIMITER ;
+select majArticle(123,'fpjapf', 3.55);
+
+--exo2 q8
+DELIMITER |
+create or replace function entrerStock(refA int, codeE int, qte int) returns int(6)
+begin
+    declare res int(6) DEFAULT -1;
+    declare resA int(6) DEFAULT 0;
+    declare resE int(6) DEFAULT 0;
+    declare resQ int(6) DEFAULT 0;
+    
+    select reference into resA from ARTICLE where reference = refA;
+
+    select code into resA from ENTREPOT where code = codeE;
+
+    if (resA is not null and resE is not null) THEN
+    select quantite into resQ from STOCKER where code = codeE and reference = refA;
+        if (resQ IS NULL) THEN
+        insert into STOCKER(reference,code,quantite) values(refA,codeE,qte);
+        else
+        set qte = qte+resQ;
+        update STOCKER set quantite=qte where code=codeE and reference = refA;
+        set res = qte;
+        end if;
+    end if;
+return res;
+END |
+DELIMITER ;
+select entrerStock(1,1,25);
+
+--exo2 q9
+DELIMITER |
+create or replace function retirerStock(refA int, codeE int, qte int) returns int(6)
+begin
+    declare res int(6) DEFAULT -1;
+    declare resA int(6) DEFAULT 0;
+    declare resE int(6) DEFAULT 0;
+    
+    select reference,code into resA,resE
+    from STOCKER 
+    where reference = refA and code = codeE;
+
+    if resA = refA and resE = codeE THEN
+        update STOCKER
+        set quantite = quantite-qte
+        where reference = refA and code = codeE;
+        set res = qte;
+    end if;
+return res;
+END |
+DELIMITER ;
+--select retirerStock(1,1,25);
