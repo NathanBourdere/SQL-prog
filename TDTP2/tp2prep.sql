@@ -248,3 +248,49 @@ return res;
 END |
 DELIMITER ;
 --select retirerStock(1,1,25);
+
+--exo3 q1
+--ou ALTER TABLE ENTREPOT ADD CONSTRAINT UNIQUE(nom, departement);
+DELIMITER |
+create or replace trigger uniciteNomEnt before insert on ENTREPOT for each row
+begin
+    declare entNom int;
+    declare res varchar(500) default '';
+    select nom into entNom from ENTREPOT where nom = new.nom and departement = new.departement;
+    if (entNom is not null) THEN
+        set res = concat(res,"erreur :",entNom," déjà dans la bd");
+        signal SQLSTATE '45000' set MESSAGE_TEXT = res;
+    end if;
+END |
+DELIMITER ;
+
+--exo3 q2
+
+DELIMITER |
+create or replace trigger trigga before insert on ENTREPOT for each row
+begin
+    declare jspquoi int;
+    declare res varchar(500) default '';
+    select IFNULL(count(code),0) into jspquoi from ENTREPOT;
+    if (jspquoi > 3) THEN
+        set res = concat(res,"erreur : trop d'entreprise dans ce département ( ",jspquoi," doit être inférieur ou égal à 3");
+        signal SQLSTATE '45000' set MESSAGE_TEXT = res;
+    end if;
+END |
+DELIMITER ;
+
+--exo3 q3
+
+DELIMITER |
+create or replace trigger exo3 before update on ENTREPOT for each row
+begin
+    declare diff int(6);
+    declare res varchar(500) default '';
+    declare qteAjoute int(6);
+    declare oldQte int(6);
+    declare refA int(6);
+    declare codeE int(6);
+    select reference,code,quantite into refA,codeE,oldQte from ARTICLE NATURAL JOIN STOCKER NATURAL JOIN ENTREPOT where reference = new.reference;
+    set qteAjoute = new.quantite;
+    set diff = qteAjoute-oldQte;
+    create or replace view 
