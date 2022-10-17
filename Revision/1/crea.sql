@@ -1,0 +1,32 @@
+-- CREATE DATABASE IF NOT EXISTS ELEVES DEFAULT CHARACTER SET UTF8MB4 COLLATE utf8_general_ci;
+-- USE ELEVES
+DROP TABLE SUIVRE;
+DROP TABLE ELEVE;
+DROP TABLE MATIERE;
+
+CREATE TABLE ELEVE (
+  num INT(9),
+  nom VARCHAR(42),
+  prenom VARCHAR(42),
+  bac VARCHAR(42),
+  annee INT(4),
+  PRIMARY KEY(num) 
+);
+
+CREATE TABLE MATIERE (
+  reference INT(9),
+  nom VARCHAR(42),
+  domaine VARCHAR(42),
+  nbheurestotale INT(2),
+  PRIMARY KEY(reference) 
+);
+
+CREATE TABLE SUIVRE (
+  num INT(9),
+  reference INT(9),
+  nbheureseffectuees INT(2),
+  PRIMARY KEY(num,reference) 
+);
+
+ALTER TABLE SUIVRE ADD FOREIGN KEY (num) REFERENCES ELEVE(num);
+ALTER TABLE SUIVRE ADD FOREIGN KEY (reference) REFERENCES MATIERE(reference);
